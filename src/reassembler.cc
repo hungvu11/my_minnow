@@ -1,55 +1,53 @@
 #include "reassembler.hh"
+#include <limits.h>
 
 using namespace std;
 
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring, Writer& output )
 {
   // Your code here.
-  uint64_t left = output.bytes_pushed();
-  uint64_t right = output.bytes_pushed() + output.available_capacity();
-  if (first_index <= next_byte && next_byte < first_index + data.length()) {
-    int l = next_byte - first_index;
-    output.push(data.substr(l, data.length() - l));
-    next_byte = output.bytes_pushed();
-    if (is_last_substring) output.close();
-
-    for (auto it = remain.begin(); it != remain.end(); it++) {
-      string s = (*it).second;
-      uint64_t index = (*it).first;
-      if (index <= next_byte && next_byte < index + s.length()) {
-        int l1 = next_byte - index;
-        output.push(s.substr(l1, s.length() - l1));
-        next_byte = output.bytes_pushed();
-        // byte_pending -= s.length();
-        if (mp[*it]) output.close();
-        remain.erase(it);
-      } else if (index + s.length() <= output.bytes_pushed()) {
-        // byte_pending -= s.length();
-        remain.erase(it);
-      } else if (index > next_byte) break;
+  uint64_t len = data.length();
+  if (size_ <= first_index + len) {
+    for (uint64_t i=size_; i < first_index + len + 10; i++) {
+      char_pending.push_back(INT_MIN);
+      is_last.push_back(false);
     }
-  } else if (output.available_capacity() > 0 && first_index + data.length() > left && first_index < right) {
-    remain.insert({first_index, data});
-    if (is_last_substring) mp[{first_index, data}] = true;
-    // byte_pending += data.length();
-  } else if (data.length() == 0 && is_last_substring) {
-    output.close();
+    size_ = first_index + len + 10;
   }
 
-  uint64_t bound = 0;
-  byte_pending = 0;
-  for (auto it = remain.begin(); it != remain.end(); it++) {
-    left = (*it).first;
-    right = left + (*it).second.length();
-    if (left < bound) {
-      if (right > bound) {
-        byte_pending += (right - bound);
-        bound = right;
-      }
-    } else {
-      byte_pending += (right - left);
-      bound = right;
+  if (output.available_capacity() > 0 && first_index <= next_byte && next_byte < first_index + len) {
+    uint64_t capacity_ = output.available_capacity();
+    string s = "";
+    uint64_t start = next_byte-first_index;
+    for (uint64_t i = start; i < len; i++) {
+      if (capacity_ == 0) break;
+      if (char_pending[i+first_index] != INT_MIN) byte_pending--;
+      char_pending[i+first_index] = data[i];
+      s += data[i];
+      next_byte++;
+      capacity_--;
+      is_last[i+first_index] = is_last_substring;
     }
+    
+    // uint64_t start = next_byte;
+    
+    while(char_pending[next_byte] != INT_MIN && capacity_ > 0) {
+      if (next_byte >= first_index + len) byte_pending--;
+      s += char_pending[next_byte++];
+      capacity_--;
+    }
+    output.push(s);
+    // byte_pending -= (next_byte - start);
+
+    if (is_last[next_byte-1]) output.close();
+  } else if (output.available_capacity() > 0 && first_index + len > next_byte && first_index < next_byte + output.available_capacity()) {
+    for (uint64_t i=first_index; i<first_index + len; i++) {
+      if (char_pending[i] == INT_MIN) byte_pending++;
+      char_pending[i] = data[i-first_index];
+      is_last[i] = is_last_substring;
+    }
+  } else if (len == 0 && is_last_substring) {
+    output.close();
   }
 }
 

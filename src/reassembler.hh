@@ -3,17 +3,20 @@
 #include "byte_stream.hh"
 
 #include <string>
-#include <set>
-#include <map>
-#include <utility>
+#include <cstring>
+#include <vector>
 
 class Reassembler
 {
 private:
-  std::set<std::pair<uint64_t, std::string>> remain{};
-  std::map<std::pair<uint64_t, std::string>, bool> mp{};
+  // char char_pending[500000];
+  // bool is_last[500000];
+  std::vector<int> char_pending{};
+  std::vector<bool> is_last{};
   uint64_t next_byte = 0;
   uint64_t byte_pending = 0;
+  uint64_t size_ = 0;
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
@@ -35,6 +38,10 @@ public:
    *
    * The Reassembler should close the stream after writing the last byte.
    */
+  // Reassembler() {
+  //   memset(char_pending, -1, sizeof(char_pending));
+  //   memset(is_last, false, sizeof(is_last));
+  // }
   void insert( uint64_t first_index, std::string data, bool is_last_substring, Writer& output );
 
   // How many bytes are stored in the Reassembler itself?
