@@ -18,6 +18,8 @@ public:
 
   /* Construct a Wrap32 given an absolute sequence number n and the zero point. */
   static Wrap32 wrap( uint64_t n, Wrap32 zero_point );
+  Wrap32() = default;
+  ~Wrap32() = default;
 
   /*
    * The unwrap method returns an absolute sequence number that wraps to this Wrap32, given the zero point
