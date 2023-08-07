@@ -46,6 +46,19 @@ public:
     datagrams_in_.pop();
     return datagram;
   }
+
+  bool is_empty()
+  {
+    return datagrams_in_.empty();
+  }
+};
+
+struct route_config
+{
+  uint32_t route_prefix;
+  uint8_t prefix_length;
+  std::optional<Address> next_hop;
+  size_t interface_num;
 };
 
 // A router that has multiple network interfaces and
@@ -54,6 +67,12 @@ class Router
 {
   // The router's collection of network interfaces
   std::vector<AsyncNetworkInterface> interfaces_ {};
+
+  std::vector<route_config> route_table_ {};
+
+  void process_dgram(InternetDatagram& dgram);
+
+  bool is_match(uint32_t src_ip, uint32_t dst_ip, uint8_t prefix_length);
 
 public:
   // Add an interface to the router

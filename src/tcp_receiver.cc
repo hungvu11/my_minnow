@@ -16,14 +16,13 @@ void TCPReceiver::receive( TCPSenderMessage message, Reassembler& reassembler, W
   uint64_t abs_seqno = Wrap32(message.seqno).unwrap(zero_point, checkpoint);
 
   if (message.FIN) fin_flag = true;
-  
+
   reassembler.insert(abs_seqno + message.SYN - 1, message.payload, message.FIN, inbound_stream);
 }
 
 TCPReceiverMessage TCPReceiver::send( const Writer& inbound_stream ) const
 {
   // Your code here.
-  (void)inbound_stream;
   TCPReceiverMessage output;
   output.window_size = (inbound_stream.available_capacity() > UINT16_MAX) ? UINT16_MAX : inbound_stream.available_capacity();
 
